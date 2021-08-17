@@ -1,0 +1,53 @@
+version: '3'
+
+services:
+  postgres:
+    hostname: host.docker.internal
+    ports:
+      - "5432:5432"
+    image: postgres:latest
+    restart: unless-stopped
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+      POSTGRES_PASSWORD: postgres
+
+    # Add "forwardPorts": ["5432"] to **devcontainer.json** to forward PostgreSQL locally.
+    # (Adding the "ports" property to this file will not forward from a Codespace.)
+  redis:
+    image: redis
+    container_name: cache
+    expose:
+      - 6379
+  vscode:
+    environment:
+      - REDIS_URL=redis://cache
+      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/postgres
+      - RAILS_ENV=dev
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+    links: 
+      - postgres
+      - redis
+
+    volumes:
+      - ..:/workspace:cached
+      - $HOME/.ssh/:/home/vscode/.ssh/
+
+    # Overrides default command so things don't shut down after the process ends.
+    command: sleep infinity
+
+    depends_on:
+      - 'redis'
+      - 'postgres'
+
+    # Uncomment the next line to use a non-root user for all processes.
+    # user: vscode
+
+    # Use "forwardPorts" in **devcontainer.json** to forward an app port locally.
+    # (Adding the "ports" property to this file will not forward from a Codespace.)
+volumes:
+  postgres-data:

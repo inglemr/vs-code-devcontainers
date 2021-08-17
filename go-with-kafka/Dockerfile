@@ -1,0 +1,3 @@
+FROM qmcgaw/godevcontainer
+RUN apk add curl git
+RUN go get -u github.com/cweill/gotests/...
